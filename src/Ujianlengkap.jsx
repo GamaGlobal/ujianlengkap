@@ -890,10 +890,6 @@ export default function UjianOnline() {
   const warnaTimer = waktu <= 300 ? "#e74c3c" : waktu <= 600 ? "#f39c12" : "#27ae60";
   const persen = waktu / (isSesi3 ? DURATION_SESI3 : DURATION_SESI);
 
-  const warnaBagian = isSesi3
-    ? (WARNA_PSIKOLOGIS[BAGIAN_LIST_AKTIF[bagianAktif]] || { bg: "#f5f5f5", accent: "#333", light: "#eee" })
-    : (WARNA_BAGIAN[BAGIAN_LIST_AKTIF[bagianAktif]] || { bg: "#f5f5f5", accent: "#333", light: "#eee" });
-
   const S = {
     card: { background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.10)", padding: "32px 28px", maxWidth: 420, width: "100%", margin: "0 auto" },
     label: { display: "block", fontSize: 13, fontWeight: 600, color: "#555", marginBottom: 6 },
