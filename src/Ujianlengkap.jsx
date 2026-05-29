@@ -265,11 +265,11 @@ const WARNA_BAGIAN = {
 };
 
 const GOOGLE_SCRIPT_URL_TPB =
-  "https://script.google.com/macros/s/AKfycbzqtZ6mqPH-iRWx9z2-0vxafQF9cSLnYwFsdtO9IMuY9SeWtYIE8zsDIPay02LkMGOI3g/exec";
+  "https://script.google.com/macros/s/AKfycby4KKeDZzJAAqNaVuSHjU1PS6e6z-RmezRJwDpSNxbxKykR5k4R02M52MJJRDzsSbdbiw/exec";
 const GOOGLE_SCRIPT_URL_TPA =
-  "https://script.google.com/macros/s/AKfycbzqtZ6mqPH-iRWx9z2-0vxafQF9cSLnYwFsdtO9IMuY9SeWtYIE8zsDIPay02LkMGOI3g/exec";
+  "https://script.google.com/macros/s/AKfycby4KKeDZzJAAqNaVuSHjU1PS6e6z-RmezRJwDpSNxbxKykR5k4R02M52MJJRDzsSbdbiw/exec";
 const GOOGLE_SCRIPT_URL_PSIKOLOGIS =
-  "https://script.google.com/macros/s/AKfycbzqtZ6mqPH-iRWx9z2-0vxafQF9cSLnYwFsdtO9IMuY9SeWtYIE8zsDIPay02LkMGOI3g/exec";
+  "https://script.google.com/macros/s/AKfycby4KKeDZzJAAqNaVuSHjU1PS6e6z-RmezRJwDpSNxbxKykR5k4R02M52MJJRDzsSbdbiw/exec";
 
 function formatWaktu(secs) {
   const m = Math.floor(secs / 60).toString().padStart(2, "0");
