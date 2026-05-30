@@ -591,8 +591,12 @@ export default function UjianOnline() {
   useEffect(() => { identitasRef.current = identitas; }, [identitas]);
   useEffect(() => { tahapRef.current = tahap; }, [tahap]);
 
-  // ── Retry helper ──
-  const kirimDenganRetry = async (url, payload, maxRetry = 5) => {
+  // ── Retry helper dengan jitter (anti-overload 300 user serentak) ──
+  const kirimDenganRetry = async (url, payload, maxRetry = 6) => {
+    // Jitter acak 0–10 detik agar 300 submit tidak menumpuk di saat bersamaan
+    const jitter = Math.floor(Math.random() * 10000);
+    await new Promise(r => setTimeout(r, jitter));
+
     for (let i = 0; i < maxRetry; i++) {
       try {
         await fetch(url, {
@@ -602,7 +606,11 @@ export default function UjianOnline() {
         });
         return;
       } catch (_) {
-        if (i < maxRetry - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+        if (i < maxRetry - 1) {
+          // Exponential backoff + jitter tambahan per retry
+          const delay = (1000 * (i + 1)) + Math.floor(Math.random() * 3000);
+          await new Promise(r => setTimeout(r, delay));
+        }
       }
     }
   };
@@ -1076,23 +1084,74 @@ export default function UjianOnline() {
       )}
 
       {/* Modal Konfirmasi Submit */}
-      {konfirmasi && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 28, maxWidth: 360, width: "90%", textAlign: "center" }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>📤</div>
-            <h3 style={{ marginBottom: 8 }}>Kumpulkan Jawaban?</h3>
-            <p style={{ fontSize: 14, color: "#555", marginBottom: 8 }}>Sesi {sesiAktif}: <strong>{NAMA_SESI}</strong></p>
-            <p style={{ fontSize: 14, color: "#555", marginBottom: 20 }}>Sudah dijawab: <strong>{totalDijawab}/{totalSoalAktif}</strong> {isSesi3 ? "butir" : "soal"}.</p>
+      {konfirmasi && !loading && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", maxWidth: 380, width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ fontSize: 44, marginBottom: 10 }}>
+              {sesiAktif === 1 ? "📋" : sesiAktif === 2 ? "📚" : "🧠"}
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1a1a2e", marginBottom: 6 }}>Kumpulkan Jawaban Sesi {sesiAktif}?</h3>
+            <p style={{ fontSize: 13, color: "#777", marginBottom: 14 }}>{NAMA_SESI}</p>
+            {/* Progress bar jawaban */}
+            <div style={{ background: "#f0f0f0", borderRadius: 8, height: 10, marginBottom: 6, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.round((totalDijawab / totalSoalAktif) * 100)}%`, background: sesiAktif === 1 ? "linear-gradient(90deg,#27ae60,#2ecc71)" : sesiAktif === 2 ? "linear-gradient(90deg,#2980b9,#6dd5fa)" : "linear-gradient(90deg,#7b1fa2,#ab47bc)", borderRadius: 8, transition: "width 0.4s" }} />
+            </div>
+            <p style={{ fontSize: 13, color: "#555", marginBottom: 4 }}>
+              Terjawab: <strong style={{ color: totalDijawab === totalSoalAktif ? "#27ae60" : "#e74c3c" }}>{totalDijawab}</strong> / {totalSoalAktif} {isSesi3 ? "butir" : "soal"}
+            </p>
+            {totalDijawab < totalSoalAktif && (
+              <p style={{ fontSize: 12, color: "#e74c3c", marginBottom: 10 }}>
+                ⚠️ Masih ada <strong>{totalSoalAktif - totalDijawab}</strong> soal belum dijawab
+              </p>
+            )}
             {isSesi3 && (
               <div style={{ background: "#f3e5f5", borderRadius: 8, padding: "8px 12px", marginBottom: 14, fontSize: 12, color: "#7b1fa2" }}>
                 🧠 Tidak ada jawaban benar/salah — jawablah dengan jujur sesuai diri kamu
               </div>
             )}
+            <div style={{ background: "#fffde7", border: "1px solid #ffe082", borderRadius: 8, padding: "8px 12px", marginBottom: 18, fontSize: 12, color: "#795548" }}>
+              ⏱️ Jawaban akan dikirim otomatis. Harap tunggu hingga selesai.
+            </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button style={{ ...S.btnSec, flex: 1 }} onClick={() => setKonfirmasi(false)}>Batal</button>
-              <button style={{ ...S.btnPrimary, flex: 1, background: isSesi3 ? "linear-gradient(90deg,#7b1fa2,#ab47bc)" : undefined }} onClick={() => { setKonfirmasi(false); KIRIM_AKTIF(); }}>
-                {loading ? "Mengirim..." : "Ya, Kumpulkan"}
+              <button style={{ flex: 1, padding: "12px 0", borderRadius: 12, border: "2px solid #ccc", background: "#f5f5f5", color: "#555", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+                onClick={() => setKonfirmasi(false)}>
+                ← Kembali
               </button>
+              <button
+                style={{ flex: 2, padding: "12px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 15, fontWeight: 800, color: "#fff", letterSpacing: 0.5,
+                  background: sesiAktif === 1
+                    ? "linear-gradient(90deg,#27ae60,#00c853)"
+                    : sesiAktif === 2
+                    ? "linear-gradient(90deg,#1565c0,#42a5f5)"
+                    : "linear-gradient(90deg,#6a1b9a,#e040fb)",
+                  boxShadow: sesiAktif === 1
+                    ? "0 4px 16px rgba(39,174,96,0.4)"
+                    : sesiAktif === 2
+                    ? "0 4px 16px rgba(41,128,185,0.4)"
+                    : "0 4px 16px rgba(123,31,162,0.4)"
+                }}
+                onClick={() => { setKonfirmasi(false); KIRIM_AKTIF(); }}>
+                ✅ Ya, Kumpulkan Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Loading — tampil saat mengirim ke server */}
+      {loading && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: 20, padding: "36px 32px", maxWidth: 340, width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            {/* Spinner animasi */}
+            <div style={{ display: "inline-block", width: 56, height: 56, border: "5px solid #f0f0f0", borderTop: `5px solid ${sesiAktif === 1 ? "#27ae60" : sesiAktif === 2 ? "#2980b9" : "#7b1fa2"}`, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 20 }} />
+            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1a1a2e", marginBottom: 8 }}>Mengirim Jawaban...</h3>
+            <p style={{ fontSize: 13, color: "#777", marginBottom: 16, lineHeight: 1.6 }}>
+              Jawaban kamu sedang dikirim ke server.<br />
+              <strong>Jangan tutup atau refresh halaman ini.</strong>
+            </p>
+            <div style={{ background: "#f5f5f5", borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "#888" }}>
+              ⏳ Proses ini membutuhkan beberapa detik...
             </div>
           </div>
         </div>
@@ -1256,14 +1315,20 @@ export default function UjianOnline() {
           )}
           {bagianAktif < BAGIAN_LIST_AKTIF.length - 1
             ? <button onClick={() => { setBagianAktif((p) => p + 1); scrollKeAtas(); }} style={{ ...S.btnPrimary, flex: 1 }}>Bagian Berikutnya →</button>
-            : <button onClick={() => setKonfirmasi(true)} style={{ ...S.btnPrimary, flex: 1,
-                background: sesiAktif === 1
-                  ? "linear-gradient(90deg,#27ae60,#2ecc71)"
-                  : sesiAktif === 2
-                  ? "linear-gradient(90deg,#2980b9,#6dd5fa)"
-                  : "linear-gradient(90deg,#7b1fa2,#ab47bc)"
-              }}>
-                {sesiAktif === 1 ? "✅ Selesai Sesi 1" : sesiAktif === 2 ? "📤 Kumpulkan Sesi 2" : "🧠 Selesai Sesi 3 Psikologis"}
+            : <button
+                disabled={loading}
+                onClick={() => !loading && setKonfirmasi(true)}
+                style={{ ...S.btnPrimary, flex: 1, opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer",
+                  background: loading ? "#aaa"
+                    : sesiAktif === 1 ? "linear-gradient(90deg,#27ae60,#00c853)"
+                    : sesiAktif === 2 ? "linear-gradient(90deg,#1565c0,#42a5f5)"
+                    : "linear-gradient(90deg,#6a1b9a,#e040fb)",
+                  boxShadow: loading ? "none"
+                    : sesiAktif === 1 ? "0 4px 16px rgba(39,174,96,0.35)"
+                    : sesiAktif === 2 ? "0 4px 16px rgba(41,128,185,0.35)"
+                    : "0 4px 16px rgba(123,31,162,0.35)"
+                }}>
+                {loading ? "⏳ Mengirim..." : sesiAktif === 1 ? "✅ Selesai Sesi 1" : sesiAktif === 2 ? "📤 Kumpulkan Sesi 2" : "🧠 Selesai Sesi 3 Psikologis"}
               </button>
           }
         </div>
