@@ -558,7 +558,7 @@ export default function UjianOnline() {
   //        | "skorSesi2" | "pengerjaanSesi3" | "selesaiSemua" | "sudahSubmit"
   const [tahap, setTahap] = useState("identitas");
   const [sesiAktif, setSesiAktif] = useState(1);
-  const [identitas, setIdentitas] = useState({ nama: "", kelas: "", nis: "", sekolah: "" });
+  const [identitas, setIdentitas] = useState({ nama: "", noPeserta: "", nis: "", asalSekolah: "" });
   const [jawabanSesi1, setJawabanSesi1] = useState({});
   const [jawabanSesi2, setJawabanSesi2] = useState({});
   const [jawabanSesi3, setJawabanSesi3] = useState({});
@@ -626,7 +626,7 @@ export default function UjianOnline() {
     const id = identitasRef.current;
     const payload = {
       sesi: "TPB - Tes Potensi Belajar",
-      nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
+      nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
       waktuSelesai: new Date().toLocaleString("id-ID"),
       sisaWaktu: formatWaktu(waktuRef.current),
       skorBenar: skor.benar, skorTotal: skor.total, persenSkor: skor.persen,
@@ -662,7 +662,7 @@ export default function UjianOnline() {
     if (alasan.toLowerCase().includes("diskualifikasi")) {
       const payloadTPAKosong = {
         sesi: "TPA - Tes Potensi Akademik",
-        nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
+        nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
         waktuSelesai: new Date().toLocaleString("id-ID"), sisaWaktu: "-",
         skorBenar: 0, skorTotal: SOAL_TPA.length, persenSkor: 0,
         matika_benar: 0, matika_total: 0, matika_persen: 0,
@@ -676,7 +676,7 @@ export default function UjianOnline() {
       // Kirim sesi 3 kosong juga
       const payloadPsikologisKosong = {
         sesi: "Psikologis",
-        nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
+        nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
         waktuSelesai: new Date().toLocaleString("id-ID"), sisaWaktu: "-",
         bf_O: 0, bf_C: 0, bf_E: 0, bf_A: 0, bf_N: 0,
         hl_R: 0, hl_I: 0, hl_A: 0, hl_S: 0, hl_E: 0, hl_C: 0,
@@ -709,7 +709,7 @@ export default function UjianOnline() {
     const id = identitasRef.current;
     const payload = {
       sesi: "TPA - Tes Potensi Akademik",
-      nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
+      nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
       waktuSelesai: new Date().toLocaleString("id-ID"),
       sisaWaktu: formatWaktu(waktuRef.current),
       skorBenar: skor.benar, skorTotal: skor.total, persenSkor: skor.persen,
@@ -730,7 +730,7 @@ export default function UjianOnline() {
       // Kirim sesi 3 kosong juga
       const payloadPsikologisKosong = {
         sesi: "Psikologis",
-        nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
+        nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
         waktuSelesai: new Date().toLocaleString("id-ID"), sisaWaktu: "-",
         bf_O: 0, bf_C: 0, bf_E: 0, bf_A: 0, bf_N: 0,
         hl_R: 0, hl_I: 0, hl_A: 0, hl_S: 0, hl_E: 0, hl_C: 0,
@@ -767,7 +767,7 @@ export default function UjianOnline() {
     const dvak = dominanVAK(vak);
     const payload = {
       sesi: "Psikologis",
-      nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
+      nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
       waktuSelesai: new Date().toLocaleString("id-ID"),
       sisaWaktu: formatWaktu(waktuRef.current),
       // Big Five
@@ -916,7 +916,7 @@ export default function UjianOnline() {
 
   // ── Navigasi antar sesi ──
   const mulaiUjian = () => {
-    if (!identitas.nama.trim() || !identitas.kelas.trim() || !identitas.nis.trim() || !identitas.sekolah.trim()) { setError("Semua field wajib diisi!"); return; }
+    if (!identitas.nama.trim() || !identitas.noPeserta.trim() || !identitas.nis.trim() || !identitas.asalSekolah.trim()) { setError("Semua field wajib diisi!"); return; }
     const sudah = localStorage.getItem(`ujian_submitted_${identitas.nis}`);
     if (sudah) { setTahap("sudahSubmit"); return; }
     setError("");
@@ -1016,10 +1016,10 @@ export default function UjianOnline() {
               <span style={{ background: "#f3e5f5", color: "#7b1fa2", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 3: Psikologis • 30 menit</span>
             </div>
           </div>
-          {["nama", "kelas", "nis", "sekolah"].map((field) => (
+          {["nama", "noPeserta", "nis", "asalSekolah"].map((field) => (
             <div key={field} style={{ marginBottom: 16 }}>
-              <label style={S.label}>{field === "nis" ? "NIS" : field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input style={S.input} placeholder={`Masukkan ${field === "nis" ? "NIS" : field}...`} value={identitas[field]} onChange={(e) => setIdentitas((p) => ({ ...p, [field]: e.target.value }))} />
+              <label style={S.label}>{field === "nis" ? "NIS" : field === "noPeserta" ? "No. Peserta" : field === "asalSekolah" ? "Asal Sekolah" : field.charAt(0).toUpperCase() + field.slice(1)}</label>
+              <input style={S.input} placeholder={`Masukkan ${field === "nis" ? "NIS" : field === "noPeserta" ? "No. Peserta" : field === "asalSekolah" ? "Asal Sekolah" : field}...`} value={identitas[field]} onChange={(e) => setIdentitas((p) => ({ ...p, [field]: e.target.value }))} />
             </div>
           ))}
           {error && <div style={S.errorBox}>{error}</div>}
@@ -1267,7 +1267,7 @@ export default function UjianOnline() {
       <div style={{ position: "sticky", top: 0, zIndex: 100, background: "#1a1a2e", color: "#fff", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
         <div>
           <div style={{ fontSize: 11, opacity: 0.7 }}>Sesi {sesiAktif}/3 — {NAMA_SESI}</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>{identitas.nama} • {identitas.kelas}</div>
+          <div style={{ fontSize: 14, fontWeight: 700 }}>{identitas.nama} • {identitas.noPeserta}</div>
         </div>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 28, fontWeight: 800, color: warnaTimer, letterSpacing: 2, fontVariantNumeric: "tabular-nums" }}>{formatWaktu(waktu)}</div>
