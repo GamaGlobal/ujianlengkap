@@ -558,7 +558,7 @@ export default function UjianOnline() {
   //        | "skorSesi2" | "pengerjaanSesi3" | "selesaiSemua" | "sudahSubmit"
   const [tahap, setTahap] = useState("identitas");
   const [sesiAktif, setSesiAktif] = useState(1);
-  const [identitas, setIdentitas] = useState({ nama: "", noPeserta: "", nis: "", asalSekolah: "" });
+  const [identitas, setIdentitas] = useState({ nama: "", kelas: "", nis: "", sekolah: "" });
   const [jawabanSesi1, setJawabanSesi1] = useState({});
   const [jawabanSesi2, setJawabanSesi2] = useState({});
   const [jawabanSesi3, setJawabanSesi3] = useState({});
@@ -626,7 +626,7 @@ export default function UjianOnline() {
     const id = identitasRef.current;
     const payload = {
       sesi: "TPB - Tes Potensi Belajar",
-      nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
+      nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
       waktuSelesai: new Date().toLocaleString("id-ID"),
       sisaWaktu: formatWaktu(waktuRef.current),
       skorBenar: skor.benar, skorTotal: skor.total, persenSkor: skor.persen,
@@ -662,7 +662,7 @@ export default function UjianOnline() {
     if (alasan.toLowerCase().includes("diskualifikasi")) {
       const payloadTPAKosong = {
         sesi: "TPA - Tes Potensi Akademik",
-        nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
+        nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
         waktuSelesai: new Date().toLocaleString("id-ID"), sisaWaktu: "-",
         skorBenar: 0, skorTotal: SOAL_TPA.length, persenSkor: 0,
         matika_benar: 0, matika_total: 0, matika_persen: 0,
@@ -673,6 +673,26 @@ export default function UjianOnline() {
         keterangan: "TIDAK MENGIKUTI — " + alasan,
       };
       try { await kirimDenganRetry(GOOGLE_SCRIPT_URL_TPA, payloadTPAKosong); } catch (_) {}
+      // Kirim sesi 3 kosong juga
+      const payloadPsikologisKosong = {
+        sesi: "Psikologis",
+        nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
+        waktuSelesai: new Date().toLocaleString("id-ID"), sisaWaktu: "-",
+        bf_O: 0, bf_C: 0, bf_E: 0, bf_A: 0, bf_N: 0,
+        hl_R: 0, hl_I: 0, hl_A: 0, hl_S: 0, hl_E: 0, hl_C: 0,
+        kode_holland: "-", vak_V: 0, vak_A: 0, vak_K: 0,
+        gaya_dominan: "-", rekomendasi_jurusan: "-", konfiden_jurusan: "-",
+        jawaban_bf:  SOAL_BIG_FIVE.map(() => "-").join("|"),
+        jawaban_hl:  SOAL_HOLLAND.map(() => "-").join("|"),
+        jawaban_vak: SOAL_VAK.map(() => "-").join("|"),
+        jumlahPelanggaran: pelanggaranRef.current,
+        keterangan: "TIDAK MENGIKUTI — " + alasan,
+      };
+      try { await kirimDenganRetry(GOOGLE_SCRIPT_URL_PSIKOLOGIS, payloadPsikologisKosong); } catch (_) {}
+      localStorage.setItem(
+        `ujian_submitted_${id.nis}`,
+        JSON.stringify({ nama: id.nama, waktu: new Date().toLocaleString("id-ID") })
+      );
     }
     setLoading(false);
     setTahap("skorSesi1");
@@ -689,7 +709,7 @@ export default function UjianOnline() {
     const id = identitasRef.current;
     const payload = {
       sesi: "TPA - Tes Potensi Akademik",
-      nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
+      nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
       waktuSelesai: new Date().toLocaleString("id-ID"),
       sisaWaktu: formatWaktu(waktuRef.current),
       skorBenar: skor.benar, skorTotal: skor.total, persenSkor: skor.persen,
@@ -706,6 +726,28 @@ export default function UjianOnline() {
       keterangan: alasan,
     };
     try { await kirimDenganRetry(GOOGLE_SCRIPT_URL_TPA, payload); } catch (_) {}
+    if (alasan.toLowerCase().includes("diskualifikasi")) {
+      // Kirim sesi 3 kosong juga
+      const payloadPsikologisKosong = {
+        sesi: "Psikologis",
+        nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
+        waktuSelesai: new Date().toLocaleString("id-ID"), sisaWaktu: "-",
+        bf_O: 0, bf_C: 0, bf_E: 0, bf_A: 0, bf_N: 0,
+        hl_R: 0, hl_I: 0, hl_A: 0, hl_S: 0, hl_E: 0, hl_C: 0,
+        kode_holland: "-", vak_V: 0, vak_A: 0, vak_K: 0,
+        gaya_dominan: "-", rekomendasi_jurusan: "-", konfiden_jurusan: "-",
+        jawaban_bf:  SOAL_BIG_FIVE.map(() => "-").join("|"),
+        jawaban_hl:  SOAL_HOLLAND.map(() => "-").join("|"),
+        jawaban_vak: SOAL_VAK.map(() => "-").join("|"),
+        jumlahPelanggaran: pelanggaranRef.current,
+        keterangan: "TIDAK MENGIKUTI — " + alasan,
+      };
+      try { await kirimDenganRetry(GOOGLE_SCRIPT_URL_PSIKOLOGIS, payloadPsikologisKosong); } catch (_) {}
+      localStorage.setItem(
+        `ujian_submitted_${id.nis}`,
+        JSON.stringify({ nama: id.nama, waktu: new Date().toLocaleString("id-ID") })
+      );
+    }
     setLoading(false);
     setTahap("skorSesi2");
   }, []);
@@ -725,7 +767,7 @@ export default function UjianOnline() {
     const dvak = dominanVAK(vak);
     const payload = {
       sesi: "Psikologis",
-      nama: id.nama, noPeserta: id.noPeserta, nis: id.nis, asalSekolah: id.asalSekolah,
+      nama: id.nama, kelas: id.kelas, nis: id.nis, sekolah: id.sekolah,
       waktuSelesai: new Date().toLocaleString("id-ID"),
       sisaWaktu: formatWaktu(waktuRef.current),
       // Big Five
@@ -823,9 +865,58 @@ export default function UjianOnline() {
 
   const masukFullscreen = () => { document.documentElement.requestFullscreen().catch(() => {}); };
 
+  // ── Wake Lock — cegah layar mati saat ujian berlangsung ──
+  const wakeLockRef = useRef(null);
+  const [wakeLockAktif, setWakeLockAktif] = useState(false);
+
+  const aktifkanWakeLock = useCallback(async () => {
+    try {
+      if ("wakeLock" in navigator && !wakeLockRef.current) {
+        wakeLockRef.current = await navigator.wakeLock.request("screen");
+        wakeLockRef.current.addEventListener("release", () => {
+          wakeLockRef.current = null;
+          setWakeLockAktif(false);
+        });
+        setWakeLockAktif(true);
+      }
+    } catch (_) {
+      setWakeLockAktif(false);
+    }
+  }, []);
+
+  const bebaskanWakeLock = useCallback(() => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release().catch(() => {});
+      wakeLockRef.current = null;
+      setWakeLockAktif(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const sedangUjian = tahap === "pengerjaan" || tahap === "pengerjaanSesi2" || tahap === "pengerjaanSesi3";
+    if (!sedangUjian) { bebaskanWakeLock(); return; }
+
+    // Aktifkan wake lock saat mulai ujian
+    aktifkanWakeLock();
+
+    // Re-aktifkan otomatis saat layar kembali menyala / tab kembali aktif
+    // (Wake Lock otomatis terlepas saat layar mati, perlu di-request ulang)
+    const handleReaktifkan = () => {
+      if (document.visibilityState === "visible") {
+        aktifkanWakeLock();
+      }
+    };
+    document.addEventListener("visibilitychange", handleReaktifkan);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleReaktifkan);
+      bebaskanWakeLock();
+    };
+  }, [tahap, aktifkanWakeLock, bebaskanWakeLock]);
+
   // ── Navigasi antar sesi ──
   const mulaiUjian = () => {
-    if (!identitas.nama.trim() || !identitas.noPeserta.trim() || !identitas.nis.trim() || !identitas.asalSekolah.trim()) { setError("Semua field wajib diisi!"); return; }
+    if (!identitas.nama.trim() || !identitas.kelas.trim() || !identitas.nis.trim() || !identitas.sekolah.trim()) { setError("Semua field wajib diisi!"); return; }
     const sudah = localStorage.getItem(`ujian_submitted_${identitas.nis}`);
     if (sudah) { setTahap("sudahSubmit"); return; }
     setError("");
@@ -925,20 +1016,24 @@ export default function UjianOnline() {
               <span style={{ background: "#f3e5f5", color: "#7b1fa2", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 3: Psikologis • 30 menit</span>
             </div>
           </div>
-          {["nama", "noPeserta", "nis", "asalSekolah"].map((field) => (
+          {["nama", "kelas", "nis", "sekolah"].map((field) => (
             <div key={field} style={{ marginBottom: 16 }}>
-              <label style={S.label}>{field === "nis" ? "NIS" : field === "noPeserta" ? "No Peserta" : field === "asalSekolah" ? "Asal Sekolah" : field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input style={S.input} placeholder={`Masukkan ${field === "nis" ? "NIS" : field === "noPeserta" ? "No Peserta" : field === "asalSekolah" ? "Asal Sekolah" : field}...`} value={identitas[field]} onChange={(e) => setIdentitas((p) => ({ ...p, [field]: e.target.value }))} />
+              <label style={S.label}>{field === "nis" ? "NIS" : field.charAt(0).toUpperCase() + field.slice(1)}</label>
+              <input style={S.input} placeholder={`Masukkan ${field === "nis" ? "NIS" : field}...`} value={identitas[field]} onChange={(e) => setIdentitas((p) => ({ ...p, [field]: e.target.value }))} />
             </div>
           ))}
           {error && <div style={S.errorBox}>{error}</div>}
           <div style={{ background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 10, padding: "12px 16px", marginBottom: 10, fontSize: 13, color: "#795548" }}>
             ⚠️ Setiap NIS hanya dapat submit <strong>satu kali</strong>.
           </div>
-          <div style={{ background: "#fdecea", border: "1px solid #ffcdd2", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#b71c1c", lineHeight: 1.6 }}>
+          <div style={{ background: "#fdecea", border: "1px solid #ffcdd2", borderRadius: 10, padding: "12px 16px", marginBottom: 10, fontSize: 13, color: "#b71c1c", lineHeight: 1.6 }}>
             🔒 Ujian berjalan dalam <strong>mode layar penuh</strong>.<br />
             Dilarang: pindah tab, minimize, klik kanan, copy-paste.<br />
             Pelanggaran <strong>{MAX_PELANGGARAN}x</strong> → DISKUALIFIKASI.
+          </div>
+          <div style={{ background: "#e8f5e9", border: "1px solid #a5d6a7", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#2e7d32", lineHeight: 1.6 }}>
+            💡 <strong>Layar tidak akan mati</strong> selama ujian berlangsung.<br />
+            Pastikan baterai cukup atau perangkat terhubung charger.
           </div>
           <button style={S.btnPrimary} onClick={mulaiUjian}>Mulai Ujian (Layar Penuh) →</button>
         </div>
@@ -1172,7 +1267,7 @@ export default function UjianOnline() {
       <div style={{ position: "sticky", top: 0, zIndex: 100, background: "#1a1a2e", color: "#fff", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
         <div>
           <div style={{ fontSize: 11, opacity: 0.7 }}>Sesi {sesiAktif}/3 — {NAMA_SESI}</div>
-          <div style={{ fontSize: 14, fontWeight: 700 }}>{identitas.nama} • {identitas.noPeserta}</div>
+          <div style={{ fontSize: 14, fontWeight: 700 }}>{identitas.nama} • {identitas.kelas}</div>
         </div>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 28, fontWeight: 800, color: warnaTimer, letterSpacing: 2, fontVariantNumeric: "tabular-nums" }}>{formatWaktu(waktu)}</div>
@@ -1184,6 +1279,12 @@ export default function UjianOnline() {
           <div style={{ fontSize: 12, opacity: 0.7 }}>Dijawab</div>
           <div style={{ fontSize: 18, fontWeight: 700 }}>{totalDijawab}/{totalSoalAktif}</div>
           {pelanggaran > 0 && <div style={{ fontSize: 11, color: "#e74c3c", fontWeight: 700 }}>⚠️ {pelanggaran}/{MAX_PELANGGARAN}</div>}
+          <div style={{ fontSize: 10, marginTop: 2 }}>
+            {wakeLockAktif
+              ? <span style={{ color: "#2ecc71" }}>🔆 Layar terjaga</span>
+              : <span style={{ color: "#e67e22" }}>⚠️ Layar bisa mati</span>
+            }
+          </div>
         </div>
       </div>
 
