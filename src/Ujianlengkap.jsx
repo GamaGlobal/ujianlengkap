@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const DURATION_SESI = 60 * 60;   // 60 menit (Sesi 1 & 2)
+const DURATION_SESI1 = 60 * 60;   // 60 menit (Sesi 1)
+const DURATION_SESI2 = 75 * 60;   // 75 menit (Sesi 2)
 const DURATION_SESI3 = 30 * 60;  // 30 menit (Sesi 3 Psikologis)
 const MAX_PELANGGARAN = 3;
 
@@ -136,11 +137,11 @@ const SOAL_TPA = [
   { bagian: "Penalaran Matematika", nomor: 13, soal: "Tabel nilai Matematika kelas 9C. Berapa jumlah siswa yang nilainya di bawah rata-rata?", gambar: "/images/3.jpeg", pilihan: ["A. 18", "B. 10", "C. 3", "D. 22"], kunci: "B" },
   { bagian: "Penalaran Matematika", nomor: 14, soal: "Organisasi 22 anggota, dipilih 4 pengurus secara acak. Jika 1 sudah terpilih, peluang anggota lain TIDAK terpilih menjadi pengurus adalah ...", pilihan: ["A. 1/9", "B. 1/7", "C. 7/9", "D. 6/7"], kunci: "D" },
   { bagian: "Penalaran Matematika", nomor: 15, soal: "Perbandingan panjang dan lebar persegi panjang 7:4. Keliling 66 cm. Berapa luasnya?", pilihan: ["A. 218 cm²", "B. 198 cm²", "C. 132 cm²", "D. 252 cm²"], kunci: "D"},
-  { bagian: "Penalaran Matematika", nomor: 16, soal: " Sebuah mobil antik berharga Rp54.000.000 sedang diskon akhir tahun sebesar 10%. Jika membayarnya melalui ATM Salcen, akan sebesar 15% mendapat diskon lagi sebesar Seandainya Fabi ingin membeli mobil antik  tersebut dan membayarnya melalui ATM Salcen, berapakah harga mobil antik yang harus dibayar?", pilihan: “A. Rp52500000”, “B. Rp41310000”, “C. Rp40500000”, “D. Rp54500000”], kunci: "B"},
-  { bagian: "Penalaran Matematika", nomor: 17, soal: " Luas dari taman yang ayah miliki adalah 25 meter persegi. Jika keliling dari taman kakek adalah 2 kali keliling taman ayah, maka luas taman ayah adalah .. persen dari luas taman kakek. (taman ayah dan kakek sama-sama persegi)", pilihan: “A. 29”, “B. 39”, “C.25”, “D.15”], kunci: "C"},
-  { bagian: "Penalaran Matematika", nomor: 18, soal: " Ahmad, Bilgis, dan Citra adalah mahasiswa yang memiliki pekerjaan sampingan. Gaji Ahmad adalah yang paling besar dan gaji Balqis adalah setengah dari gaji Citra. Setelah bekerja selama 6 bulan, Ahmad berhasil mengumpulkan Rp5.500.000,00 dari hasil kerjanya dan lebih besar Rp1.500.000,00 dari hasil kerja Citra selama 5 bulan. Berapakah gaji Balqis setelah 8 bulan?", pilihan: “A. Rp3.200,000,00”, “B. Rp2.800,000,00”, “C. Rp4.000,000,00”, “D. Rp2.000.000,00”], kunci: "A"},
-  { bagian: "Penalaran Matematika", nomor: 19, soal: " Suatu hari, Bu Desi bersama empat anak-anaknya pergi ke sebuah toko mainan untuk membelikan Beliau berencana anaknya masing-masing 1 buah mainan dengan harga yang sama. Sesampainya di toko tersebut, ternyata Bu Desi harus mengeluarkan uang sebesar Rp13.000 untuk penitipan barang. Jika Bu Desi hanya membawa 3/25 dari total uangnya ke toko yang dibeli tersebut dan tiap mainan berharga Rp8.000, berapa total keseluruhan uang yang Bu Desi miliki pada awalnya?", pilihan: “A. Rp375.000”, “B. Rp400,000”, “C. Rp390.000”, “D. Rp390.000”], kunci: "A"},
-  { bagian: "Penalaran Matematika", nomor: 20, soal: " Seorang tukang jahit mendapat pesanan menjahit kaos untuk keperluan kampanye lahannya mampu menjahit 60 potong dalam 3 hari, Bila ia bekerja selama 2 minggu, berapa potong kaos yang dapat ia kerjakan?", pilihan: “A. 80 potong”, “B. 180 potong”, “C. 120 potong”, “D. 280 potong”], kunci: "D"},
+  { bagian: "Penalaran Matematika", nomor: 16, soal: " Sebuah mobil antik berharga Rp54.000.000 sedang diskon akhir tahun sebesar 10%. Jika membayarnya melalui ATM Salcen, akan sebesar 15% mendapat diskon lagi sebesar Seandainya Fabi ingin membeli mobil antik  tersebut dan membayarnya melalui ATM Salcen, berapakah harga mobil antik yang harus dibayar?", pilihan: ["A. Rp52500000", "B. Rp41310000", "C. Rp40500000", "D. Rp54500000"], kunci: "B"},
+  { bagian: "Penalaran Matematika", nomor: 17, soal: " Luas dari taman yang ayah miliki adalah 25 meter persegi. Jika keliling dari taman kakek adalah 2 kali keliling taman ayah, maka luas taman ayah adalah .. persen dari luas taman kakek. (taman ayah dan kakek sama-sama persegi)", pilihan: ["A. 29", "B. 39", "C.25", "D.15"], kunci: "C"},
+  { bagian: "Penalaran Matematika", nomor: 18, soal: " Ahmad, Bilgis, dan Citra adalah mahasiswa yang memiliki pekerjaan sampingan. Gaji Ahmad adalah yang paling besar dan gaji Balqis adalah setengah dari gaji Citra. Setelah bekerja selama 6 bulan, Ahmad berhasil mengumpulkan Rp5.500.000,00 dari hasil kerjanya dan lebih besar Rp1.500.000,00 dari hasil kerja Citra selama 5 bulan. Berapakah gaji Balqis setelah 8 bulan?", pilihan: ["A. Rp3.200,000,00", "B. Rp2.800,000,00", "C. Rp4.000,000,00", "D. Rp2.000.000,00"], kunci: "A"},
+  { bagian: "Penalaran Matematika", nomor: 19, soal: " Suatu hari, Bu Desi bersama empat anak-anaknya pergi ke sebuah toko mainan untuk membelikan Beliau berencana anaknya masing-masing 1 buah mainan dengan harga yang sama. Sesampainya di toko tersebut, ternyata Bu Desi harus mengeluarkan uang sebesar Rp13.000 untuk penitipan barang. Jika Bu Desi hanya membawa 3/25 dari total uangnya ke toko yang dibeli tersebut dan tiap mainan berharga Rp8.000, berapa total keseluruhan uang yang Bu Desi miliki pada awalnya?", pilihan: ["A. Rp375.000", "B. Rp400,000", "C. Rp390.000", "D. Rp390.000"], kunci: "A"},
+  { bagian: "Penalaran Matematika", nomor: 20, soal: " Seorang tukang jahit mendapat pesanan menjahit kaos untuk keperluan kampanye lahannya mampu menjahit 60 potong dalam 3 hari, Bila ia bekerja selama 2 minggu, berapa potong kaos yang dapat ia kerjakan?", pilihan: ["A. 80 potong", "B. 180 potong", "C. 120 potong", "D. 280 potong"], kunci: "D"},
   { bagian: "Literasi Keislaman", nomor: 1, soal: "Adam membaca ayat sajdah, lalu menghadap kiblat, niat, takbir, sujud, dan salam. Hal yang dilakukan Adam adalah contoh dari sujud ...", pilihan: ["A. Tilawah", "B. Wajib", "C. Syukur", "D. Sahwi"], kunci: "A" },
   { bagian: "Literasi Keislaman", nomor: 2, soal: "Perhatikan hadis berikut! Dalam hadis yang tercantum di bawah, terdapat amalan salat sunah ghairu muakkad, yaitu ...", gambar: "/images/4.jpeg", pilihan: ["A. Salat Istisqa'", "B. Salat Idul Fitri", "C. Salat Idul Adha", "D. Salat Istikharah"], kunci: "A" },
   { bagian: "Literasi Keislaman", nomor: 3, soal: "Perhatikan dalil berikut! Dalil di bawah menyebutkan dua bangkai yang halal untuk dimakan, yaitu ...", gambar: "/images/5.jpeg", pilihan: ["A. Ikan dan belalang", "B. Kambing dan sapi", "C. Unta dan sapi", "D. Ikan dan unta"], kunci: "A" },
@@ -604,7 +605,7 @@ export default function UjianOnline() {
   const [jawabanSesi1, setJawabanSesi1] = useState({});
   const [jawabanSesi2, setJawabanSesi2] = useState({});
   const [jawabanSesi3, setJawabanSesi3] = useState({});
-  const [waktu, setWaktu] = useState(DURATION_SESI);
+  const [waktu, setWaktu] = useState(DURATION_SESI1);
   const [bagianAktif, setBagianAktif] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -625,7 +626,7 @@ export default function UjianOnline() {
   const jawabanSesi1Ref = useRef({});
   const jawabanSesi2Ref = useRef({});
   const jawabanSesi3Ref = useRef({});
-  const waktuRef = useRef(DURATION_SESI);
+  const waktuRef = useRef(DURATION_SESI1);
   const identitasRef = useRef(identitas);
   const tahapRef = useRef(tahap);
 
@@ -968,7 +969,7 @@ export default function UjianOnline() {
     if (fullscreenDidukung) document.documentElement.requestFullscreen().catch(() => {});
     submitDoneRef.current = false;
     pelanggaranRef.current = 0;
-    setWaktu(DURATION_SESI);
+    setWaktu(DURATION_SESI1);
     setBagianAktif(0);
     setSesiAktif(1);
     setTahap("pengerjaan");
@@ -978,7 +979,7 @@ export default function UjianOnline() {
     submitDoneRef.current = false;
     pelanggaranRef.current = 0;
     setPelanggaran(0);
-    setWaktu(DURATION_SESI);
+    setWaktu(DURATION_SESI2);
     setBagianAktif(0);
     setSesiAktif(2);
     if (fullscreenDidukung) document.documentElement.requestFullscreen().catch(() => {});
@@ -1032,7 +1033,7 @@ export default function UjianOnline() {
     : SOAL_AKTIF.length;
 
   const warnaTimer = waktu <= 300 ? "#e74c3c" : waktu <= 600 ? "#f39c12" : "#27ae60";
-  const persen = waktu / (isSesi3 ? DURATION_SESI3 : DURATION_SESI);
+  const persen = waktu / (isSesi3 ? DURATION_SESI3 : sesiAktif === 2 ? DURATION_SESI2 : DURATION_SESI1);
 
   const S = {
     card: { background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.10)", padding: "32px 28px", maxWidth: 420, width: "100%", margin: "0 auto" },

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const DURATION_SESI = 60 * 60;   // 60 menit (Sesi 1 & 2)
+const DURATION_SESI1 = 60 * 60;   // 60 menit (Sesi 1)
+const DURATION_SESI2 = 75 * 60;   // 75 menit (Sesi 2)
 const DURATION_SESI3 = 30 * 60;  // 30 menit (Sesi 3 Psikologis)
 const MAX_PELANGGARAN = 3;
 
@@ -136,10 +137,15 @@ const SOAL_TPA = [
   { bagian: "Penalaran Matematika", nomor: 13, soal: "Tabel nilai Matematika kelas 9C. Berapa jumlah siswa yang nilainya di bawah rata-rata?", gambar: "/images/3.jpeg", pilihan: ["A. 18", "B. 10", "C. 3", "D. 22"], kunci: "B" },
   { bagian: "Penalaran Matematika", nomor: 14, soal: "Organisasi 22 anggota, dipilih 4 pengurus secara acak. Jika 1 sudah terpilih, peluang anggota lain TIDAK terpilih menjadi pengurus adalah ...", pilihan: ["A. 1/9", "B. 1/7", "C. 7/9", "D. 6/7"], kunci: "D" },
   { bagian: "Penalaran Matematika", nomor: 15, soal: "Perbandingan panjang dan lebar persegi panjang 7:4. Keliling 66 cm. Berapa luasnya?", pilihan: ["A. 218 cm²", "B. 198 cm²", "C. 132 cm²", "D. 252 cm²"], kunci: "D"},
+  { bagian: "Penalaran Matematika", nomor: 16, soal: " Sebuah mobil antik berharga Rp54.000.000 sedang diskon akhir tahun sebesar 10%. Jika membayarnya melalui ATM Salcen, akan sebesar 15% mendapat diskon lagi sebesar Seandainya Fabi ingin membeli mobil antik  tersebut dan membayarnya melalui ATM Salcen, berapakah harga mobil antik yang harus dibayar?", pilihan: ["A. Rp52500000", "B. Rp41310000", "C. Rp40500000", "D. Rp54500000"], kunci: "B"},
+  { bagian: "Penalaran Matematika", nomor: 17, soal: " Luas dari taman yang ayah miliki adalah 25 meter persegi. Jika keliling dari taman kakek adalah 2 kali keliling taman ayah, maka luas taman ayah adalah .. persen dari luas taman kakek. (taman ayah dan kakek sama-sama persegi)", pilihan: ["A. 29", "B. 39", "C.25", "D.15"], kunci: "C"},
+  { bagian: "Penalaran Matematika", nomor: 18, soal: " Ahmad, Bilgis, dan Citra adalah mahasiswa yang memiliki pekerjaan sampingan. Gaji Ahmad adalah yang paling besar dan gaji Balqis adalah setengah dari gaji Citra. Setelah bekerja selama 6 bulan, Ahmad berhasil mengumpulkan Rp5.500.000,00 dari hasil kerjanya dan lebih besar Rp1.500.000,00 dari hasil kerja Citra selama 5 bulan. Berapakah gaji Balqis setelah 8 bulan?", pilihan: ["A. Rp3.200,000,00", "B. Rp2.800,000,00", "C. Rp4.000,000,00", "D. Rp2.000.000,00"], kunci: "A"},
+  { bagian: "Penalaran Matematika", nomor: 19, soal: " Suatu hari, Bu Desi bersama empat anak-anaknya pergi ke sebuah toko mainan untuk membelikan Beliau berencana anaknya masing-masing 1 buah mainan dengan harga yang sama. Sesampainya di toko tersebut, ternyata Bu Desi harus mengeluarkan uang sebesar Rp13.000 untuk penitipan barang. Jika Bu Desi hanya membawa 3/25 dari total uangnya ke toko yang dibeli tersebut dan tiap mainan berharga Rp8.000, berapa total keseluruhan uang yang Bu Desi miliki pada awalnya?", pilihan: ["A. Rp375.000", "B. Rp400,000", "C. Rp390.000", "D. Rp390.000"], kunci: "A"},
+  { bagian: "Penalaran Matematika", nomor: 20, soal: " Seorang tukang jahit mendapat pesanan menjahit kaos untuk keperluan kampanye lahannya mampu menjahit 60 potong dalam 3 hari, Bila ia bekerja selama 2 minggu, berapa potong kaos yang dapat ia kerjakan?", pilihan: ["A. 80 potong", "B. 180 potong", "C. 120 potong", "D. 280 potong"], kunci: "D"},
   { bagian: "Literasi Keislaman", nomor: 1, soal: "Adam membaca ayat sajdah, lalu menghadap kiblat, niat, takbir, sujud, dan salam. Hal yang dilakukan Adam adalah contoh dari sujud ...", pilihan: ["A. Tilawah", "B. Wajib", "C. Syukur", "D. Sahwi"], kunci: "A" },
   { bagian: "Literasi Keislaman", nomor: 2, soal: "Perhatikan hadis berikut! Dalam hadis yang tercantum di bawah, terdapat amalan salat sunah ghairu muakkad, yaitu ...", gambar: "/images/4.jpeg", pilihan: ["A. Salat Istisqa'", "B. Salat Idul Fitri", "C. Salat Idul Adha", "D. Salat Istikharah"], kunci: "A" },
   { bagian: "Literasi Keislaman", nomor: 3, soal: "Perhatikan dalil berikut! Dalil di bawah menyebutkan dua bangkai yang halal untuk dimakan, yaitu ...", gambar: "/images/5.jpeg", pilihan: ["A. Ikan dan belalang", "B. Kambing dan sapi", "C. Unta dan sapi", "D. Ikan dan unta"], kunci: "A" },
- { bagian: "Literasi Keislaman", nomor: 4, soal: "a) Muzakki b) Mencapai haul c) Islam d) Makanan pokok e) Mustahiq f) Baligh g) Mencapai nisab h) Memiliki kelebihan makanan.\n\n Yang termasuk syarat wajib zakat fitrah dari daftar ketentuan adalah ...", pilihan: ["A. a, d, dan g", "B. c, d, dan h", "C. a, b, dan g", "D. b, e, dan f"], kunci: "B" },
+  { bagian: "Literasi Keislaman", nomor: 4, soal: "a) Muzakki b) Mencapai haul c) Islam d) Makanan pokok e) Mustahiq f) Baligh g) Mencapai nisab h) Memiliki kelebihan makanan.\n\n Yang termasuk syarat wajib zakat fitrah dari daftar ketentuan adalah ...", pilihan: ["A. a, d, dan g", "B. c, d, dan h", "C. a, b, dan g", "D. b, e, dan f"], kunci: "B" },
   { bagian: "Literasi Keislaman", nomor: 5, soal: "Berikut adalah syarat yang berhubungan dengan barang yang digadaikan dalam ar-Rahn, KECUALI ...", pilihan: ["A. Barang berharga yang dapat menutup hutangnya.", "B. Barang yang tidak boleh diperjualbelikan.", "C. Milik orang yang menggadaikan.", "D. Diketahui ukuran, jenis, dan sifatnya."], kunci: "B" },
   { bagian: "Literasi Keislaman", nomor: 6, soal: "Dari daftar: (1) Ibu, (2) Saudara perempuan sebapak, (3) Istri, (4) Cucu perempuan dari anak laki-laki, (5) Anak perempuan, (6) Cucu perempuan dari anak perempuan. Yang termasuk ahli waris perempuan adalah ...", pilihan: ["A. 1, 2, 3, 4, 5", "B. 1, 2, 3, 5, 6", "C. 1, 2, 4, 5, 6", "D. 1, 3, 4, 5, 6"], kunci: "A"},
   { bagian: "Literasi Keislaman", nomor: 7, soal: "Allah membuka jalan bagi manusia untuk menggali karunia-Nya dan membuka pintu kemenangan. Sifat Allah yang sesuai adalah ...", pilihan: ["A. Ar-Rauf", "B. Al-Aziz", "C. Al-Fattah", "D. Al-Qayyum"], kunci: "C" },
@@ -151,7 +157,12 @@ const SOAL_TPA = [
   { bagian: "Literasi Keislaman", nomor: 13, soal: "Toleransi yang salah kaprah adalah jika seseorang ...", pilihan: ["A. Membiarkan tetangga berbeda agama merayakan hari besarnya dengan tenang.", "B. Mengikuti ritual ibadah agama lain karena merasa semua agama sama saja.", "C. Memberikan bantuan logistik kepada korban bencana tanpa melihat latar belakang agama.", "D. Menjaga keamanan tempat ibadah agama lain saat sedang digunakan."], kunci: "B" },
   { bagian: "Literasi Keislaman", nomor: 14, soal: "Sebagai ketua OSIS yang moderat (prinsip I'tidal), jika ada dua ekskul agama mengajukan dana bersamaan, tindakan paling tepat adalah ...", pilihan: ["A. Memberikan dana lebih besar kepada ekskul dengan anggota paling banyak.", "B. Memberikan dana hanya kepada ekskul yang seagama dengannya.", "C. Membagi dana secara proporsional dan adil sesuai kebutuhan objektif masing-masing.", "D. Menolak keduanya agar tidak terjadi kecemburuan sosial."], kunci: "C" },
   { bagian: "Literasi Keislaman", nomor: 15, soal: "Mengapa sikap anti-kekerasan verbal menjadi syarat mutlak moderasi beragama di media sosial?", pilihan: ["A. Karena dapat menurunkan peringkat akun media sosial.", "B. Karena kekerasan verbal adalah pintu masuk menuju kekerasan fisik dan perpecahan sosial.", "C. Karena aturan hukum di Indonesia sangat ketat.", "D. Karena tokoh agama tidak boleh dikritik sama sekali."], kunci: "B" },
-  {
+  { bagian: "Literasi Keislaman", nomor: 16, soal: " Di sebuah daerah, terdapat tradisi sedekah bumi sebagai bentuk syukur. Bagaimana sikap seorang siswa yang moderat terhadap tradisi tersebut?", pilihan: ["A. Mengharamkan secara mutlak tanpa mempelajari filosofinya.", "B. Menerima tradisi tersebut sebagai kekayaan budaya dan menyisipkan nilai-nilai syukur kepada Tuhan tanpa merusak pokok ajaran agama.", "C. Memaksa mengubah seluruh tata cara adat menjadi ritual agama murni.", "D. Menjauhi masyarakat yang masih mempraktikkan tradisi tersebut."], kunci: "B" },
+  { bagian: "Literasi Keislaman", nomor: 17, soal: " Sebagai makhluk penghuni bumi, pada dasarnya kita hanya meminjam bumi ini kepada generasi sesudah kita. Maka kita berkewajiban untuk tetap menjaga dan melestarikannya, sehingga pada saatnya kita kembalikan dalam keadaan tetap utuh atau bahkan lebih baik. Dalam sebuah hadis, disebutkan bahwa barang siapa mampu menjadikan tanah gersang tadi menjadi produktif dan menghasilkan manfaat, maka ia berhak mendapatkan bumi tadi dan itu akan menjadi miliknya. Hadis tersebut adalah", gambar: "/images/ayat1.jpeg", pilihan: ["A. A", "B. B", "C. C", "D. D "], kunci: "C" },
+  { bagian: "Literasi Keislaman", nomor: 18, soal: " Seorang pelajar tidak memiliki kemauan untuk menambah berbagai pengalaman dan mencari tahu apayang belum diketahuinya. Sebenarnya, ia memiliki kesempatan untuk melakukan hal itu tapi pada akhirnya kesempatan yang ada terbuang sia-sia. Padahal Allah telah menjadikan otak untuk bisa berpikir dan menimbulkan kemauan dan kesempatan untuk memulai sesuatu. Pernyataan tersebut jika dikaitkan dengan QS. al-Alaq ayat 1-5, maka sebagai seorang pelajar kita harus ..", pilihan: ["A. Memiliki sikap disiplin.", "B. Menghargai waktu.", "C. Membantu teman.", "D. Menuntut ilmu. "], kunci: "D" },
+  { bagian: "Literasi Keislaman", nomor: 19, soal: " Nabi yang mendapatkan keistimewaan dari Allah Swt. dapat memahami bahasa binatang dan termasuk Nabi yang paling kaya di antara manusia sepanjang sejarah peradaban tapi kekuasaan yang dimilikinya tersebut justru membuatnya merasa rendah hati di hadapan makhluk-Nya yang lain adalah ...", pilihan: ["A. Nabi Ayyub.", "B. Nabi Yunus.", "C. Nabi Sulaiman.", "D. Nabi Yusuf."], kunci: "C" },
+  { bagian: "Literasi Keislaman", nomor: 20, soal: " Faiq adalah seorang muslim yang taat. la senantiasa ikhtiar dalam mencapai sesuatu yang diharapkan dan bertawakal kepada Allah Swt. Ketika dihadapkan dengan suatu musibah, Faiq menghadapinya dengan tabah dan sabar serta tidak menyesali akan nasib yang menimpanya. Perilaku Faruq merupakan ciri-ciri orang yang beriman kepada ...", pilihan: ["A. Hari kiamat.", "B. Kitab.", "C. Malaikat.", "D. Qadha dan Qadar."], kunci: "D"},
+ {
     bagian: "Literasi Membaca", nomor: 1,
     teksJudul: "Teks 1: Aktivitas Fisik dan PTM",
     teks: "Menurut Kemenkes, aktivitas fisik merupakan setiap gerakan tubuh yang diakibatkan kerja otot rangka dan meningkatkan pengeluaran tenaga serta energi. Data menunjukkan kesadaran masyarakat Indonesia dalam mementingkan aktivitas fisik harian dinilai masih rendah. Kurangnya aktivitas fisik merupakan salah satu penyebab cukup tingginya PTM (penyakit tidak menular) di Indonesia.\n\nBerdasarkan data Riskesdas tahun 2013, tingginya PTM di Indonesia menjadi salah satu penyebab mayoritas kematian di Indonesia. Penyakit yang umum dialami oleh masyarakat Indonesia adalah diabetes, hipertensi, obesitas, stroke, penyakit jantung kronis, dan gagal ginjal. Pemerintah pun menemukan bahwa dari sekian jumlah penderita PTM di Indonesia, tidak lagi diisi oleh orang dengan usia yang sudah lanjut. Mulai banyak ditemukan penderita PTM dengan usia produktif 15–65 tahun, bahkan di usia muda, yaitu 0–15 tahun. Oleh karena itu, penting untuk mengimbau masyarakat agar rajin beraktivitas fisik guna menunjang kesehatan individu.\n\n(Sumber: kemkes.go.id)",
@@ -206,48 +217,80 @@ const SOAL_TPA = [
   },
   {
     bagian: "Literasi Membaca", nomor: 9,
-    teksJudul: "Text 6: A Letter from Marshel",
+    teksJudul: "Teks 6: Zoom",
+    teks: " Pada awal bulan Juni ini, Zoom mengatakan bahwa hanya pelanggan berbayar yang akan mendapatkan fitur keamanan enkripsi end-to-end. Namun, Zoom kini berubah pikiran. Melalui blog resminya, CEO Zoom, Eric S. Yuan mengatakan bahwa fitur keamanan tersebut juga akan diberikan kepada semua pengguna, termasuk pengguna Zoom gratis.\n\n Fitur keamanan ini akan mulai diuji untuk semua pengguna Zoom pada awal bulan Juli mendatang. Namun, perlu diingat, fitur keamanan enkripsi end-to-end harus diaktifkan secara manual oleh pengguna. Pengguna yang bertindak sebagai host dalam konferensi video akan dapat mengaktifkan atau menonaktifkan fitur keamanan tersebut pada setiap rapat yang telah dilakukan. Sebab, enkripsi end-to-end ini akan membatasi sejumlah fitur dan fungsI saat konferensi video berlangsung. \n\n (Sumber: kompas.com)",
+    soal: " Makna enkripsi pada kalimat dalam teks pertama tersebut adalah ...",
+    pilihan: ["A. Menutup data.", "B. Memperbarui data.", "C. Metode pengodean data agar tidak terbaca.", "D. Metode penghapusan data."], kunci: "C"
+  },
+  {
+    bagian: "Literasi Membaca", nomor: 10,
+    teksJudul: "Teks 6: Zoom",
+    soal: "Pernyataan yang sesuai dengan isi teks tersebut adalah ...",
+    pilihan: ["A. Jika fitur enkripsi end-to-end sudah diaktifkan, tidak akan bisa dinonaktifkan kembali.", " B. Fitur keamanan enkripsi end-to-end akan diuji pada Juni mendatang.", " C. Pengguna perlu mengaktifkan fitur enkripsi end-to-end sendiri atau secara manual.", " D. Sejak awal, Zoom menyediakan fitur enkripsi end-to-end untuk semua pelanggannya."], kunci: "C"
+  },
+  {
+    bagian: "Literasi Membaca", nomor: 11,
+    teksJudul: "Text 7: A Letter from Marshel",
     teks: "This is Marshel, I was working on a case involving a thief from Morocco in Germany (they stole the biggest jewelry from the richest man alive, Richie Rich). When I'm seeking the culprit, it leads me to a treasure in North Sumatra with a woman called \"Carmen\" as her codename. Attached to this letter, I assume, would be two plane tickets and two fake passports for you and Yatson. Do pack your bags and let's meet at \"Junkie Bar\" next to the abandoned cinema. Don't flash yourself or you'll cause some unnecessary trouble again.\n\nHave a lovely day,\nJuley.",
     soal: "What is the purpose of the text above?",
     pilihan: ["A. To remind Juley not to flash himself.", "B. To wish Juley a lovely day.", "C. To inform Juley of Marshel's recent work.", "D. To urge Juley and Yatson to meet Marshel."], kunci: "D"
   },
   {
-    bagian: "Literasi Membaca", nomor: 10,
-    teksJudul: "Text 6: A Letter from Marshel",
+    bagian: "Literasi Membaca", nomor: 12,
+    teksJudul: "Text 7: A Letter from Marshel",
     soal: "The statements below are TRUE according to the text above, EXCEPT ...",
     pilihan: ["A. The thief was from Germany.", "B. Marshel is seeking for the culprit.", "C. Marshel and Juley are to meet next to an abandoned cinema.", "D. Attached to the letter are plane tickets and passports."], kunci: "A"
   },
   {
-    bagian: "Literasi Membaca", nomor: 11,
-    teksJudul: "Text 7: The Pot (Story of Birbal)",
+    bagian: "Literasi Membaca", nomor: 13,
+    teksJudul: "Text 8: The Pot (Story of Birbal)",
     teks: "Once Emperor Akmal became very angry at his favorite minister Birbal. He asked Birbal to leave the kingdom and go away. Accepting the command of the Emperor, Birbal left the kingdom and started working in a farmer's farm in an unknown village far away under a different identity.\n\nAs months passed, Akmal started to miss Birbal. He was struggling to solve many issues in the empire without Birbal's advice. He regretted the decision, asking Birbal to leave the empire in anger. So Akmal sent his soldiers to find Birbal, but they failed to find him. Akmal finally found a trick. He sent a message to the head of every village to send a pot full of wit to the Emperor. If the pot full of wit could not be sent, fill the pot with diamonds and jewels.\n\nThis message also reached Birbal, who lived in one of the villages. Birbal took the pot and went back to the farm. He had planted watermelons on his farm. He selected a small watermelon and without cutting it from the plant, he put that in the pot. He started looking after it by providing water and fertilizer regularly. Within a few days, the watermelon grew into a pot so much that it was impossible to get it out of the pot. Birbal then cut the watermelon from the vine and sent a pot to Emperor Akmal with a message: \"Please remove the wit without cutting it from the pot and without breaking the pot.\"\n\nAkmal watched the watermelon in the pot and realized that this could only be Birbal's work. Akmal himself came to the village and took Birbal back with him.",
     soal: "Below are the steps Birbal took to accomplish the task of giving a pot full of wit to the Emperor, EXCEPT ...",
     pilihan: ["A. Birbal selected a watermelon to be placed in the pot.", "B. Birbal cut open the watermelon.", "C. Birbal provided water and fertilizer.", "D. Birbal sent the pot away."], kunci: "B"
   },
   {
-    bagian: "Literasi Membaca", nomor: 12,
-    teksJudul: "Text 7: The Pot (Story of Birbal)",
+    bagian: "Literasi Membaca", nomor: 14,
+    teksJudul: "Text 8: The Pot (Story of Birbal)",
     soal: "The conclusion from the story is ...",
     pilihan: ["A. Emperor Akmal and Birbal made peace.", "B. Birbal stayed at the Emperor's side for the rest of his life.", "C. Birbal lived happily ever after with the Emperor.", "D. Birbal regrets his decision of going away."], kunci: "A"
   },
   {
-    bagian: "Literasi Membaca", nomor: 13,
-    teksJudul: "Text 7: The Pot (Story of Birbal)",
+    bagian: "Literasi Membaca", nomor: 15,
+    teksJudul: "Text 8: The Pot (Story of Birbal)",
     soal: "Which of the following is FALSE, according to the passage?",
     pilihan: ["A. Emperor Akmal knows Birbal very well.", "B. Birbal is easily trusted.", "C. Birbal is a trickster, posing as a watermelon as wit.", "D. Birbal went back to the Emperor's side."], kunci: "C"
   },
   {
-    bagian: "Literasi Membaca", nomor: 14,
-    teksJudul: "Text 7: The Pot (Story of Birbal)",
+    bagian: "Literasi Membaca", nomor: 16,
+    teksJudul: "Text 8: The Pot (Story of Birbal)",
     soal: "Everyone trusted Birbal and agreed to give him a chance. The word \"trusted\" CANNOT be replaced with ...",
     pilihan: ["A. Counted on", "B. Doubted", "C. Confided in", "D. Believed"], kunci: "B"
   },
   {
-    bagian: "Literasi Membaca", nomor: 15,
-    teksJudul: "Text 8: Library Announcement",
+    bagian: "Literasi Membaca", nomor: 17,
+    teksJudul: "Text 9: Library Announcement",
     teks: "ANNOUNCEMENT\n\nNotice to all students of Esan Cendana Seruni Islamic SHS who haven't returned the library's book, we are urged to return it before the last day of examination on December 15, 2020. For those who haven't returned the library's book until that specified deadline, we will apply the fines according to the applicable regulation. Thank you for your understanding and cooperation. Have a safe trip and happy new year!\n\nSigned,\nHead of Librarian of Esan Cendana Seruni Islamic SHS\nYunika Thesa",
     soal: "From the passage above, we can conclude that ...",
     pilihan: ["A. Wishing them a safe trip and happy new year.", "B. A warning for students who have not returned their book yet.", "C. Notifying students about the fines by the librarian.", "D. The announcement is made to remind students for returning schoolbooks."], kunci: "B"
+  },  
+  {
+    bagian: "Literasi Membaca", nomor: 18,
+    teksJudul: "Text 9: Library Announcement",
+    soal: "According to the passage above, what will happen to students who fail to return the books before the specified deadline?",
+    pilihan: ["A. The students are to replace the books", "B. The students will recerve a written reminder.", "C. The students will be given a fine.", "D. Nothing will happen. "], kunci: "C"
+  },
+  {
+    bagian: "Literasi Membaca", nomor: 19,
+    teksJudul: "Teks 10: Bread",
+    teks: " You will need two slices of bread, your favorite jam, and a butter knife. First, ______your favorite jamn on the bread. ______, place another slice of bread on top.After that, cut the sandwich in half. Last, enjoy your delicious jam sandwich!",
+    soal: "............., place another slice of bread on top. The blank can be filled with a few words, except ...",
+    pilihan: ["A. Next.", "B. Then.", "C. After.", "D. Afterwards."], kunci: "C"
+  },
+  {
+    bagian: "Literasi Membaca", nomor: 20,
+    teksJudul: "Teks 10: Bread",
+    soal: "What is the purpose of the text above?",
+    pilihan: ["A. To entertain the reader with a story about jam sandwich.", "B. To show the reader the procedure to make a jam sandwich.", "C. To announce the importance of making a jam sandwich.", "D. To inform the reader about a delicious sandwich."], kunci: "B"
   },  
 ];
 
@@ -562,7 +605,7 @@ export default function UjianOnline() {
   const [jawabanSesi1, setJawabanSesi1] = useState({});
   const [jawabanSesi2, setJawabanSesi2] = useState({});
   const [jawabanSesi3, setJawabanSesi3] = useState({});
-  const [waktu, setWaktu] = useState(DURATION_SESI);
+  const [waktu, setWaktu] = useState(DURATION_SESI1);
   const [bagianAktif, setBagianAktif] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -583,7 +626,7 @@ export default function UjianOnline() {
   const jawabanSesi1Ref = useRef({});
   const jawabanSesi2Ref = useRef({});
   const jawabanSesi3Ref = useRef({});
-  const waktuRef = useRef(DURATION_SESI);
+  const waktuRef = useRef(DURATION_SESI1);
   const identitasRef = useRef(identitas);
   const tahapRef = useRef(tahap);
 
@@ -926,7 +969,7 @@ export default function UjianOnline() {
     if (fullscreenDidukung) document.documentElement.requestFullscreen().catch(() => {});
     submitDoneRef.current = false;
     pelanggaranRef.current = 0;
-    setWaktu(DURATION_SESI);
+    setWaktu(DURATION_SESI1);
     setBagianAktif(0);
     setSesiAktif(1);
     setTahap("pengerjaan");
@@ -936,7 +979,7 @@ export default function UjianOnline() {
     submitDoneRef.current = false;
     pelanggaranRef.current = 0;
     setPelanggaran(0);
-    setWaktu(DURATION_SESI);
+    setWaktu(DURATION_SESI2);
     setBagianAktif(0);
     setSesiAktif(2);
     if (fullscreenDidukung) document.documentElement.requestFullscreen().catch(() => {});
@@ -990,7 +1033,7 @@ export default function UjianOnline() {
     : SOAL_AKTIF.length;
 
   const warnaTimer = waktu <= 300 ? "#e74c3c" : waktu <= 600 ? "#f39c12" : "#27ae60";
-  const persen = waktu / (isSesi3 ? DURATION_SESI3 : DURATION_SESI);
+  const persen = waktu / (isSesi3 ? DURATION_SESI3 : sesiAktif === 2 ? DURATION_SESI2 : DURATION_SESI1);
 
   const S = {
     card: { background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.10)", padding: "32px 28px", maxWidth: 420, width: "100%", margin: "0 auto" },
