@@ -1055,10 +1055,10 @@ export default function UjianOnline() {
           <div style={{ textAlign: "center", marginBottom: 24 }}>
             <div style={{ fontSize: 40, marginBottom: 8 }}>📝</div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a2e", margin: "8px 0 4px" }}>UJIAN SELEKSI MADRASAH MAN 5 BOGOR</h1>
-            <p style={S.muted}>3 Sesi • 150 Menit Total</p>
+            <p style={S.muted}>3 Sesi • 165 Menit Total</p>
             <div style={{ marginTop: 8, display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
               <span style={{ background: "#e8f4fd", color: "#2980b9", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 1: TPB • 60 menit</span>
-              <span style={{ background: "#eafaf1", color: "#27ae60", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 2: TPA • 60 menit</span>
+              <span style={{ background: "#eafaf1", color: "#27ae60", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 2: TPA • 75 menit</span>
               <span style={{ background: "#f3e5f5", color: "#7b1fa2", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 3: Psikologis • 30 menit</span>
             </div>
           </div>
