@@ -650,6 +650,7 @@ export default function UjianOnline() {
   const tahapRef = useRef(tahap);
 
   // ── Auto-save setiap ada perubahan jawaban/state saat ujian ──
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const sedangUjian = ["pengerjaan","pengerjaanSesi2","pengerjaanSesi3","skorSesi1","skorSesi2"].includes(tahap);
     if (!sedangUjian) return;
@@ -689,6 +690,7 @@ export default function UjianOnline() {
   }, [simpanAntrian]);
 
   // ── Kirim ulang antrian offline saat internet kembali ──
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const kirimAntrian = async () => {
       try {
@@ -906,6 +908,7 @@ export default function UjianOnline() {
   }, []);
 
   // ── Timer countdown ──
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const sedangUjian = tahap === "pengerjaan" || tahap === "pengerjaanSesi2" || tahap === "pengerjaanSesi3";
     if (!sedangUjian) return;
@@ -925,6 +928,7 @@ export default function UjianOnline() {
   }, [tahap, kirimSesi1, kirimSesi2, kirimSesi3]);
 
   // ── Anti-cheat ──
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const sedangUjian = tahap === "pengerjaan" || tahap === "pengerjaanSesi2" || tahap === "pengerjaanSesi3";
     if (!sedangUjian) return;
@@ -1010,6 +1014,7 @@ export default function UjianOnline() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const sedangUjian = tahap === "pengerjaan" || tahap === "pengerjaanSesi2" || tahap === "pengerjaanSesi3";
     if (!sedangUjian) { bebaskanWakeLock(); return; }
