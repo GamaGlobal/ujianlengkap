@@ -651,19 +651,19 @@ export default function UjianOnline() {
   }, []);
 
   // ── Simpan payload ke localStorage agar bisa dikirim ulang saat online ──
-  const simpanAntrian = (url, payload) => {
+  const simpanAntrian = useCallback((url, payload) => {
     try {
       const key = `ujian_queue_${payload.nis || "unknown"}_${payload.sesi?.replace(/\s/g,"_") || Date.now()}`;
       localStorage.setItem(key, JSON.stringify({ url, payload, timestamp: Date.now() }));
     } catch (_) {}
-  };
+  }, []);
 
-  const hapusAntrian = (nis, sesi) => {
+  const hapusAntrian = useCallback((nis, sesi) => {
     try {
       const key = `ujian_queue_${nis || "unknown"}_${(sesi || "").replace(/\s/g,"_")}`;
       localStorage.removeItem(key);
     } catch (_) {}
-  };
+  }, []);
 
   // ── Kirim ulang antrian yang tersimpan saat kembali online ──
   useEffect(() => {
@@ -689,7 +689,7 @@ export default function UjianOnline() {
   }, [isOnline]);
 
   // ── Retry helper dengan jitter (anti-overload 300 user serentak) ──
-  const kirimDenganRetry = async (url, payload, maxRetry = 6) => {
+  const kirimDenganRetry = useCallback(async (url, payload, maxRetry = 6) => {
     // Simpan ke localStorage dulu sebagai backup offline
     simpanAntrian(url, payload);
 
@@ -719,7 +719,7 @@ export default function UjianOnline() {
       }
     }
     // Semua retry gagal — data tetap tersimpan di localStorage, akan dikirim ulang nanti
-  };
+  }, [simpanAntrian, hapusAntrian]);
 
   // ── Kirim Sesi 1 (TPB) ──
   const kirimSesi1 = useCallback(async (alasan = "Normal") => {
@@ -802,7 +802,7 @@ export default function UjianOnline() {
     }
     setLoading(false);
     setTahap("skorSesi1");
-  }, []);
+  }, [kirimDenganRetry]);
 
   // ── Kirim Sesi 2 (TPA) ──
   const kirimSesi2 = useCallback(async (alasan = "Normal") => {
@@ -856,7 +856,7 @@ export default function UjianOnline() {
     }
     setLoading(false);
     setTahap("skorSesi2");
-  }, []);
+  }, [kirimDenganRetry]);
 
   // ── Kirim Sesi 3 (Psikologis) — tanpa tampilkan hasil ke peserta ──
   const kirimSesi3 = useCallback(async (alasan = "Normal") => {
@@ -902,7 +902,7 @@ export default function UjianOnline() {
     );
     setLoading(false);
     setTahap("selesaiSemua");
-  }, []);
+  }, [kirimDenganRetry]);
 
   // ── Timer countdown ──
   useEffect(() => {
