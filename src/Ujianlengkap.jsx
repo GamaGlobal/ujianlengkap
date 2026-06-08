@@ -601,20 +601,20 @@ export default function UjianOnline() {
   //        | "skorSesi2" | "pengerjaanSesi3" | "selesaiSemua" | "sudahSubmit"
   // ── Helper localStorage progress ──
   const PROGRESS_KEY = "gama_ujian_progress";
-  const simpanProgress = useCallback((data) => { try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(data)); } catch(_) {} }, []);
-  const hapusProgress  = useCallback(() => { try { localStorage.removeItem(PROGRESS_KEY); } catch(_) {} }, []);
-  const ambilProgress  = useCallback(() => { try { const d = localStorage.getItem(PROGRESS_KEY); return d ? JSON.parse(d) : null; } catch(_) { return null; } }, []);
+  const simpanProgress = (data) => { try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(data)); } catch(_) {} };
+  const hapusProgress  = () => { try { localStorage.removeItem(PROGRESS_KEY); } catch(_) {} };
+  const ambilProgress  = () => { try { const d = localStorage.getItem(PROGRESS_KEY); return d ? JSON.parse(d) : null; } catch(_) { return null; } };
 
   // ── Helper antrian offline (kirim ulang saat internet kembali) ──
   const ANTRIAN_KEY = "gama_antrian_kirim";
-  const simpanAntrian = useCallback((payload) => {
+  const simpanAntrian = (payload) => {
     try {
       const existing = JSON.parse(localStorage.getItem(ANTRIAN_KEY) || "[]");
       existing.push({ ...payload, _timestamp: Date.now() });
       localStorage.setItem(ANTRIAN_KEY, JSON.stringify(existing));
     } catch(_) {}
-  }, []);
-  const hapusAntrian = useCallback(() => { try { localStorage.removeItem(ANTRIAN_KEY); } catch(_) {} }, []);
+  };
+  const hapusAntrian = () => { try { localStorage.removeItem(ANTRIAN_KEY); } catch(_) {} };
 
   // ── Restore state dari localStorage saat buka kembali ──
   const prog = ambilProgress();
@@ -650,7 +650,6 @@ export default function UjianOnline() {
   const tahapRef = useRef(tahap);
 
   // ── Auto-save setiap ada perubahan jawaban/state saat ujian ──
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const sedangUjian = ["pengerjaan","pengerjaanSesi2","pengerjaanSesi3","skorSesi1","skorSesi2"].includes(tahap);
     if (!sedangUjian) return;
@@ -665,7 +664,7 @@ export default function UjianOnline() {
   useEffect(() => { tahapRef.current = tahap; }, [tahap]);
 
   // ── Retry helper dengan jitter + antrian offline ──
-  const kirimDenganRetry = useCallback(async (url, payload, maxRetry = 6) => {
+  const kirimDenganRetry = async (url, payload, maxRetry = 6) => {
     // Jitter acak 0–10 detik agar 400 submit tidak menumpuk di saat bersamaan
     const jitter = Math.floor(Math.random() * 10000);
     await new Promise(r => setTimeout(r, jitter));
@@ -687,10 +686,9 @@ export default function UjianOnline() {
     }
     // Semua retry gagal → simpan ke antrian offline
     simpanAntrian({ url, payload });
-  }, [simpanAntrian]);
+  };
 
   // ── Kirim ulang antrian offline saat internet kembali ──
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const kirimAntrian = async () => {
       try {
@@ -720,7 +718,6 @@ export default function UjianOnline() {
   }, []);
 
   // ── Kirim Sesi 1 (TPB) ──
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const kirimSesi1 = useCallback(async (alasan = "Normal") => {
     if (submitDoneRef.current) return;
     submitDoneRef.current = true;
@@ -804,7 +801,6 @@ export default function UjianOnline() {
   }, []);
 
   // ── Kirim Sesi 2 (TPA) ──
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const kirimSesi2 = useCallback(async (alasan = "Normal") => {
     if (submitDoneRef.current) return;
     submitDoneRef.current = true;
@@ -859,7 +855,6 @@ export default function UjianOnline() {
   }, []);
 
   // ── Kirim Sesi 3 (Psikologis) — tanpa tampilkan hasil ke peserta ──
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const kirimSesi3 = useCallback(async (alasan = "Normal") => {
     if (submitDoneRef.current) return;
     submitDoneRef.current = true;
@@ -908,7 +903,6 @@ export default function UjianOnline() {
   }, []);
 
   // ── Timer countdown ──
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const sedangUjian = tahap === "pengerjaan" || tahap === "pengerjaanSesi2" || tahap === "pengerjaanSesi3";
     if (!sedangUjian) return;
@@ -928,7 +922,6 @@ export default function UjianOnline() {
   }, [tahap, kirimSesi1, kirimSesi2, kirimSesi3]);
 
   // ── Anti-cheat ──
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const sedangUjian = tahap === "pengerjaan" || tahap === "pengerjaanSesi2" || tahap === "pengerjaanSesi3";
     if (!sedangUjian) return;
@@ -1014,7 +1007,6 @@ export default function UjianOnline() {
     }
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const sedangUjian = tahap === "pengerjaan" || tahap === "pengerjaanSesi2" || tahap === "pengerjaanSesi3";
     if (!sedangUjian) { bebaskanWakeLock(); return; }
