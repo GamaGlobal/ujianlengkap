@@ -637,65 +637,8 @@ export default function UjianOnline() {
   useEffect(() => { identitasRef.current = identitas; }, [identitas]);
   useEffect(() => { tahapRef.current = tahap; }, [tahap]);
 
-  // ── Status online/offline ──
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  useEffect(() => {
-    const handleOnline  = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener("online",  handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online",  handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  // ── Simpan payload ke localStorage agar bisa dikirim ulang saat online ──
-  const simpanAntrian = (url, payload) => {
-    try {
-      const key = `ujian_queue_${payload.nis || "unknown"}_${payload.sesi?.replace(/\s/g,"_") || Date.now()}`;
-      localStorage.setItem(key, JSON.stringify({ url, payload, timestamp: Date.now() }));
-    } catch (_) {}
-  };
-
-  const hapusAntrian = (nis, sesi) => {
-    try {
-      const key = `ujian_queue_${nis || "unknown"}_${(sesi || "").replace(/\s/g,"_")}`;
-      localStorage.removeItem(key);
-    } catch (_) {}
-  };
-
-  // ── Kirim ulang antrian yang tersimpan saat kembali online ──
-  useEffect(() => {
-    if (!isOnline) return;
-    const keys = Object.keys(localStorage).filter(k => k.startsWith("ujian_queue_"));
-    if (keys.length === 0) return;
-    keys.forEach(async (key) => {
-      try {
-        const item = JSON.parse(localStorage.getItem(key) || "null");
-        if (!item) { localStorage.removeItem(key); return; }
-        const jitter = Math.floor(Math.random() * 5000);
-        await new Promise(r => setTimeout(r, jitter));
-        await fetch(item.url, {
-          method: "POST", mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(item.payload),
-        });
-        localStorage.removeItem(key);
-      } catch (_) {
-        // Biarkan, akan dicoba lagi saat online berikutnya
-      }
-    });
-  }, [isOnline]);
-
   // ── Retry helper dengan jitter (anti-overload 300 user serentak) ──
   const kirimDenganRetry = async (url, payload, maxRetry = 6) => {
-    // Simpan ke localStorage dulu sebagai backup offline
-    simpanAntrian(url, payload);
-
-    // Jika offline, langsung return — antrian akan dikirim saat online kembali
-    if (!navigator.onLine) return;
-
     // Jitter acak 0–10 detik agar 300 submit tidak menumpuk di saat bersamaan
     const jitter = Math.floor(Math.random() * 10000);
     await new Promise(r => setTimeout(r, jitter));
@@ -707,8 +650,6 @@ export default function UjianOnline() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        // Berhasil — hapus dari antrian
-        hapusAntrian(payload.nis, payload.sesi);
         return;
       } catch (_) {
         if (i < maxRetry - 1) {
@@ -718,7 +659,6 @@ export default function UjianOnline() {
         }
       }
     }
-    // Semua retry gagal — data tetap tersimpan di localStorage, akan dikirim ulang nanti
   };
 
   // ── Kirim Sesi 1 (TPB) ──
@@ -1279,13 +1219,6 @@ export default function UjianOnline() {
   return (
     <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", background: "#f0f2f5", userSelect: "none", WebkitUserSelect: "none" }}>
 
-      {/* Banner Offline */}
-      {!isOnline && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1100, background: "#c0392b", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 13, fontWeight: 700, letterSpacing: 0.3, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
-          📵 TIDAK ADA KONEKSI INTERNET — Jawaban kamu tetap tersimpan & akan dikirim otomatis saat koneksi kembali. Jangan tutup halaman ini!
-        </div>
-      )}
-
       {/* Modal Peringatan */}
       {showPeringatan && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1324,11 +1257,6 @@ export default function UjianOnline() {
                 🧠 Tidak ada jawaban benar/salah — jawablah dengan jujur sesuai diri kamu
               </div>
             )}
-            {!isOnline && (
-              <div style={{ background: "#fdecea", border: "1px solid #e74c3c", borderRadius: 8, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#b71c1c", fontWeight: 700 }}>
-                📵 Kamu sedang OFFLINE. Jawaban tetap akan tersimpan & dikirim otomatis saat koneksi kembali. Pastikan tidak menutup halaman setelah kumpul!
-              </div>
-            )}
             <div style={{ background: "#fffde7", border: "1px solid #ffe082", borderRadius: 8, padding: "8px 12px", marginBottom: 18, fontSize: 12, color: "#795548" }}>
               ⏱️ Jawaban akan dikirim otomatis. Harap tunggu hingga selesai.
             </div>
@@ -1365,14 +1293,10 @@ export default function UjianOnline() {
             {/* Spinner animasi */}
             <div style={{ display: "inline-block", width: 56, height: 56, border: "5px solid #f0f0f0", borderTop: `5px solid ${sesiAktif === 1 ? "#27ae60" : sesiAktif === 2 ? "#2980b9" : "#7b1fa2"}`, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 20 }} />
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-            <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1a1a2e", marginBottom: 8 }}>
-              {isOnline ? "Mengirim Jawaban..." : "Menyimpan Jawaban..."}
-            </h3>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1a1a2e", marginBottom: 8 }}>Mengirim Jawaban...</h3>
             <p style={{ fontSize: 13, color: "#777", marginBottom: 16, lineHeight: 1.6 }}>
-              {isOnline
-                ? <>{`Jawaban kamu sedang dikirim ke server.`}<br /><strong>Jangan tutup atau refresh halaman ini.</strong></>
-                : <><strong style={{ color: "#e74c3c" }}>Kamu sedang offline.</strong><br />Jawaban disimpan lokal & akan dikirim otomatis saat koneksi kembali.<br /><strong>Jangan tutup halaman ini!</strong></>
-              }
+              Jawaban kamu sedang dikirim ke server.<br />
+              <strong>Jangan tutup atau refresh halaman ini.</strong>
             </p>
             <div style={{ background: "#f5f5f5", borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "#888" }}>
               ⏳ Proses ini membutuhkan beberapa detik...
