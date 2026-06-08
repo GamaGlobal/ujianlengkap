@@ -599,14 +599,33 @@ function dominanVAK(vak) {
 export default function UjianOnline() {
   // tahap: "identitas" | "pengerjaan" | "skorSesi1" | "pengerjaanSesi2"
   //        | "skorSesi2" | "pengerjaanSesi3" | "selesaiSemua" | "sudahSubmit"
-  const [tahap, setTahap] = useState("identitas");
-  const [sesiAktif, setSesiAktif] = useState(1);
-  const [identitas, setIdentitas] = useState({ nama: "", noPeserta: "", nis: "", asalSekolah: "" });
-  const [jawabanSesi1, setJawabanSesi1] = useState({});
-  const [jawabanSesi2, setJawabanSesi2] = useState({});
-  const [jawabanSesi3, setJawabanSesi3] = useState({});
-  const [waktu, setWaktu] = useState(DURATION_SESI1);
-  const [bagianAktif, setBagianAktif] = useState(0);
+  // ── Helper localStorage progress ──
+  const PROGRESS_KEY = "gama_ujian_progress";
+  const simpanProgress = (data) => { try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(data)); } catch(_) {} };
+  const hapusProgress  = () => { try { localStorage.removeItem(PROGRESS_KEY); } catch(_) {} };
+  const ambilProgress  = () => { try { const d = localStorage.getItem(PROGRESS_KEY); return d ? JSON.parse(d) : null; } catch(_) { return null; } };
+
+  // ── Helper antrian offline (kirim ulang saat internet kembali) ──
+  const ANTRIAN_KEY = "gama_antrian_kirim";
+  const simpanAntrian = (payload) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem(ANTRIAN_KEY) || "[]");
+      existing.push({ ...payload, _timestamp: Date.now() });
+      localStorage.setItem(ANTRIAN_KEY, JSON.stringify(existing));
+    } catch(_) {}
+  };
+  const hapusAntrian = () => { try { localStorage.removeItem(ANTRIAN_KEY); } catch(_) {} };
+
+  // ── Restore state dari localStorage saat buka kembali ──
+  const prog = ambilProgress();
+  const [tahap, setTahap] = useState(prog?.tahap || "identitas");
+  const [sesiAktif, setSesiAktif] = useState(prog?.sesiAktif || 1);
+  const [identitas, setIdentitas] = useState(prog?.identitas || { nama: "", noPeserta: "", nis: "", asalSekolah: "" });
+  const [jawabanSesi1, setJawabanSesi1] = useState(prog?.jawabanSesi1 || {});
+  const [jawabanSesi2, setJawabanSesi2] = useState(prog?.jawabanSesi2 || {});
+  const [jawabanSesi3, setJawabanSesi3] = useState(prog?.jawabanSesi3 || {});
+  const [waktu, setWaktu] = useState(prog?.waktu || DURATION_SESI1);
+  const [bagianAktif, setBagianAktif] = useState(prog?.bagianAktif || 0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [konfirmasi, setKonfirmasi] = useState(false);
@@ -630,6 +649,13 @@ export default function UjianOnline() {
   const identitasRef = useRef(identitas);
   const tahapRef = useRef(tahap);
 
+  // ── Auto-save setiap ada perubahan jawaban/state saat ujian ──
+  useEffect(() => {
+    const sedangUjian = ["pengerjaan","pengerjaanSesi2","pengerjaanSesi3","skorSesi1","skorSesi2"].includes(tahap);
+    if (!sedangUjian) return;
+    simpanProgress({ tahap, sesiAktif, identitas, waktu, bagianAktif, jawabanSesi1, jawabanSesi2, jawabanSesi3 });
+  }, [tahap, sesiAktif, identitas, waktu, bagianAktif, jawabanSesi1, jawabanSesi2, jawabanSesi3]);
+
   useEffect(() => { jawabanSesi1Ref.current = jawabanSesi1; }, [jawabanSesi1]);
   useEffect(() => { jawabanSesi2Ref.current = jawabanSesi2; }, [jawabanSesi2]);
   useEffect(() => { jawabanSesi3Ref.current = jawabanSesi3; }, [jawabanSesi3]);
@@ -637,9 +663,9 @@ export default function UjianOnline() {
   useEffect(() => { identitasRef.current = identitas; }, [identitas]);
   useEffect(() => { tahapRef.current = tahap; }, [tahap]);
 
-  // ── Retry helper dengan jitter (anti-overload 300 user serentak) ──
+  // ── Retry helper dengan jitter + antrian offline ──
   const kirimDenganRetry = async (url, payload, maxRetry = 6) => {
-    // Jitter acak 0–10 detik agar 300 submit tidak menumpuk di saat bersamaan
+    // Jitter acak 0–10 detik agar 400 submit tidak menumpuk di saat bersamaan
     const jitter = Math.floor(Math.random() * 10000);
     await new Promise(r => setTimeout(r, jitter));
 
@@ -650,16 +676,46 @@ export default function UjianOnline() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        return;
+        return; // Berhasil
       } catch (_) {
         if (i < maxRetry - 1) {
-          // Exponential backoff + jitter tambahan per retry
           const delay = (1000 * (i + 1)) + Math.floor(Math.random() * 3000);
           await new Promise(r => setTimeout(r, delay));
         }
       }
     }
+    // Semua retry gagal → simpan ke antrian offline
+    simpanAntrian({ url, payload });
   };
+
+  // ── Kirim ulang antrian offline saat internet kembali ──
+  useEffect(() => {
+    const kirimAntrian = async () => {
+      try {
+        const antrian = JSON.parse(localStorage.getItem(ANTRIAN_KEY) || "[]");
+        if (antrian.length === 0) return;
+        const berhasil = [];
+        for (const item of antrian) {
+          try {
+            await fetch(item.url, {
+              method: "POST", mode: "no-cors",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(item.payload),
+            });
+            berhasil.push(item);
+          } catch(_) {}
+        }
+        if (berhasil.length > 0) {
+          const sisa = antrian.filter(a => !berhasil.includes(a));
+          localStorage.setItem(ANTRIAN_KEY, JSON.stringify(sisa));
+        }
+      } catch(_) {}
+    };
+    window.addEventListener("online", kirimAntrian);
+    // Coba kirim antrian saat pertama load (kalau ada)
+    kirimAntrian();
+    return () => window.removeEventListener("online", kirimAntrian);
+  }, []);
 
   // ── Kirim Sesi 1 (TPB) ──
   const kirimSesi1 = useCallback(async (alasan = "Normal") => {
@@ -840,6 +896,8 @@ export default function UjianOnline() {
       `ujian_submitted_${id.nis}`,
       JSON.stringify({ nama: id.nama, waktu: new Date().toLocaleString("id-ID") })
     );
+    hapusProgress();  // Hapus progress setelah semua sesi selesai
+    hapusAntrian();   // Hapus antrian offline
     setLoading(false);
     setTahap("selesaiSemua");
   }, []);
@@ -869,19 +927,26 @@ export default function UjianOnline() {
     if (!sedangUjian) return;
     const tangkapPindahTab = () => {
       if (!document.hidden) return;
-      pelanggaranRef.current += 1;
-      const jumlah = pelanggaranRef.current;
-      setPelanggaran(jumlah);
-      if (jumlah >= MAX_PELANGGARAN) {
-        setDidiskualifikasi(true);
-        setShowPeringatan(false);
-        if (tahapRef.current === "pengerjaan")           kirimSesi1(`Diskualifikasi - pindah tab ${jumlah}x`);
-        else if (tahapRef.current === "pengerjaanSesi2") kirimSesi2(`Diskualifikasi - pindah tab ${jumlah}x`);
-        else                                             kirimSesi3(`Diskualifikasi - pindah tab ${jumlah}x`);
-      } else {
-        setPesanPeringatan(`Kamu terdeteksi meninggalkan halaman ujian!\n\nIni adalah pelanggaran ke-${jumlah} dari ${MAX_PELANGGARAN}.\nJika mencapai ${MAX_PELANGGARAN}x, jawaban otomatis dikumpulkan dan kamu DISKUALIFIKASI.`);
-        setShowPeringatan(true);
-      }
+      // Skip jika wake lock sedang re-acquire (bukan pindah tab sungguhan)
+      if (wakeLockReacquiringRef.current) return;
+      // Debounce 400ms — cegah false positive iOS saat layar kembali menyala
+      setTimeout(() => {
+        if (!document.hidden || wakeLockReacquiringRef.current) return;
+        pelanggaranRef.current += 1;
+        const jumlah = pelanggaranRef.current;
+        setPelanggaran(jumlah);
+        if (jumlah >= MAX_PELANGGARAN) {
+          setDidiskualifikasi(true);
+          setShowPeringatan(false);
+          hapusProgress();
+          if (tahapRef.current === "pengerjaan")           kirimSesi1(`Diskualifikasi - pindah tab ${jumlah}x`);
+          else if (tahapRef.current === "pengerjaanSesi2") kirimSesi2(`Diskualifikasi - pindah tab ${jumlah}x`);
+          else                                             kirimSesi3(`Diskualifikasi - pindah tab ${jumlah}x`);
+        } else {
+          setPesanPeringatan(`Kamu terdeteksi meninggalkan halaman ujian!\n\nIni adalah pelanggaran ke-${jumlah} dari ${MAX_PELANGGARAN}.\nJika mencapai ${MAX_PELANGGARAN}x, jawaban otomatis dikumpulkan dan kamu DISKUALIFIKASI.`);
+          setShowPeringatan(true);
+        }
+      }, 400);
     };
     const blokKanan = (e) => e.preventDefault();
     const blokKeyboard = (e) => {
@@ -913,20 +978,24 @@ export default function UjianOnline() {
 
   // ── Wake Lock — cegah layar mati saat ujian berlangsung ──
   const wakeLockRef = useRef(null);
+  const wakeLockReacquiringRef = useRef(false); // flag: sedang re-acquire, bukan pindah tab
   const [wakeLockAktif, setWakeLockAktif] = useState(false);
 
   const aktifkanWakeLock = useCallback(async () => {
     try {
       if ("wakeLock" in navigator && !wakeLockRef.current) {
+        wakeLockReacquiringRef.current = true; // set flag sebelum request
         wakeLockRef.current = await navigator.wakeLock.request("screen");
         wakeLockRef.current.addEventListener("release", () => {
           wakeLockRef.current = null;
           setWakeLockAktif(false);
         });
         setWakeLockAktif(true);
+        setTimeout(() => { wakeLockReacquiringRef.current = false; }, 600);
       }
     } catch (_) {
       setWakeLockAktif(false);
+      wakeLockReacquiringRef.current = false;
     }
   }, []);
 
@@ -973,6 +1042,22 @@ export default function UjianOnline() {
     setBagianAktif(0);
     setSesiAktif(1);
     setTahap("pengerjaan");
+  };
+
+  const lanjutkanUjian = () => {
+    const p = ambilProgress();
+    if (!p) return;
+    submitDoneRef.current = false;
+    pelanggaranRef.current = 0;
+    setIdentitas(p.identitas);
+    setJawabanSesi1(p.jawabanSesi1 || {});
+    setJawabanSesi2(p.jawabanSesi2 || {});
+    setJawabanSesi3(p.jawabanSesi3 || {});
+    setSesiAktif(p.sesiAktif || 1);
+    setBagianAktif(p.bagianAktif || 0);
+    setWaktu(p.waktu || DURATION_SESI1);
+    if (fullscreenDidukung) document.documentElement.requestFullscreen().catch(() => {});
+    setTahap(p.tahap);
   };
 
   const lanjutSesi2 = () => {
@@ -1055,10 +1140,10 @@ export default function UjianOnline() {
           <div style={{ textAlign: "center", marginBottom: 24 }}>
             <div style={{ fontSize: 40, marginBottom: 8 }}>📝</div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a2e", margin: "8px 0 4px" }}>UJIAN SELEKSI MADRASAH MAN 5 BOGOR</h1>
-            <p style={S.muted}>3 Sesi • 150 Menit Total</p>
+            <p style={S.muted}>3 Sesi • 165 Menit Total</p>
             <div style={{ marginTop: 8, display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
               <span style={{ background: "#e8f4fd", color: "#2980b9", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 1: TPB • 60 menit</span>
-              <span style={{ background: "#eafaf1", color: "#27ae60", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 2: TPA • 60 menit</span>
+              <span style={{ background: "#eafaf1", color: "#27ae60", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 2: TPA • 75 menit</span>
               <span style={{ background: "#f3e5f5", color: "#7b1fa2", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>Sesi 3: Psikologis • 30 menit</span>
             </div>
           </div>
@@ -1088,6 +1173,26 @@ export default function UjianOnline() {
             💡 <strong>Layar tidak akan mati</strong> selama ujian berlangsung.<br />
             Pastikan baterai cukup atau perangkat terhubung charger.
           </div>
+          {/* Banner resume jika ada progress tersimpan */}
+          {(() => {
+            const p = ambilProgress();
+            if (!p || p.tahap === "identitas") return null;
+            const labelSesi = p.tahap === "pengerjaan" ? "Sesi 1 — TPB" : p.tahap === "pengerjaanSesi2" ? "Sesi 2 — TPA" : "Sesi 3 — Psikologis";
+            return (
+              <div style={{ background: "#e8f5e9", border: "1.5px solid #27ae60", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#27ae60", marginBottom: 4 }}>🔄 Sesi ujian ditemukan!</div>
+                <div style={{ fontSize: 12, color: "#555", marginBottom: 10 }}>
+                  <strong>{p.identitas?.nama}</strong> • {labelSesi} • Sisa waktu: <strong>{Math.floor((p.waktu||0)/60)} menit</strong>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button style={{ flex: 2, padding: "10px 0", borderRadius: 10, border: "none", background: "linear-gradient(90deg,#27ae60,#2ecc71)", color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer" }}
+                    onClick={lanjutkanUjian}>▶ Lanjutkan Ujian</button>
+                  <button style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #e74c3c", background: "#fff", color: "#e74c3c", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                    onClick={() => { hapusProgress(); window.location.reload(); }}>✕ Mulai Ulang</button>
+                </div>
+              </div>
+            );
+          })()}
           <button style={S.btnPrimary} onClick={mulaiUjian}>{isIOS ? "Mulai Ujian →" : "Mulai Ujian (Layar Penuh) →"}</button>
         </div>
       </div>
